@@ -6,9 +6,7 @@ import com.fiap.bank.atm.domain.model.Transaction;
 import com.fiap.bank.atm.domain.model.TransactionType;
 import com.fiap.bank.atm.domain.repository.AccountRepository;
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 public class InMemoryAccountRepository implements AccountRepository {
         private final Map<String, Account> accounts = new HashMap<>();
@@ -50,14 +48,29 @@ public class InMemoryAccountRepository implements AccountRepository {
         }
 
         @Override
-        public Account findByAccountNumber(String accountNumber) {
-                // Return a reference (or clone, but reference works for state updates in memory
-                // repository)
-                return accounts.get(accountNumber);
+        public Optional<Account> findByAccountNumber(String accountNumber) {
+                return Optional.ofNullable(accounts.get(accountNumber));
+        }
+
+        @Override
+        public Optional<Account> findById(UUID id) {
+                return accounts.values().stream()
+                        .filter(acc -> acc.getId().equals(id))
+                        .findFirst();
         }
 
         @Override
         public void save(Account account) {
                 accounts.put(account.getAccountNumber(), account);
+        }
+
+        @Override
+        public void remove(UUID id) {
+                accounts.values().removeIf(acc -> acc.getId().equals(id));
+        }
+
+        @Override
+        public List<Account> findAll() {
+                return new java.util.ArrayList<>(accounts.values());
         }
 }
