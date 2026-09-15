@@ -1,11 +1,14 @@
 package com.fiap.bank.atm.application.service;
 
+import com.fiap.bank.atm.application.dto.AccountInfoDTO;
+import com.fiap.bank.atm.application.dto.TransactionDTO;
 import com.fiap.bank.atm.domain.exception.InvalidPinException;
 import com.fiap.bank.atm.domain.model.Account;
 import com.fiap.bank.atm.domain.model.Money;
-import com.fiap.bank.atm.domain.model.Transaction;
 import com.fiap.bank.atm.domain.repository.AccountRepository;
+
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class AtmService {
     private final AccountRepository accountRepository;
@@ -46,37 +49,42 @@ public class AtmService {
 
     public void transfer(String targetAccountNumber, double amount) {
         ensureAuthenticated();
-
         Account targetAccount = accountRepository.findByAccountNumber(targetAccountNumber);
         if (targetAccount == null) {
             throw new IllegalArgumentException("Conta de destino não encontrada.");
         }
         currentAccount.transfer(targetAccount, Money.of(amount));
-
         accountRepository.save(currentAccount);
         accountRepository.save(targetAccount);
-    }
-
-    public Money getBalance() {
-        ensureAuthenticated();
-        return currentAccount.getBalance();
-    }
-
-    public List<Transaction> getStatement() {
-        ensureAuthenticated();
-        return currentAccount.getTransactions();
     }
 
     public void logout() {
         currentAccount = null;
     }
 
-    public Account getCurrentAccount() {
-        return currentAccount;
-    }
-
     public boolean isAuthenticated() {
         return currentAccount != null;
+    }
+
+    public AccountInfoDTO getCurrentAccountInfo() {
+        if (currentAccount == null) {
+            return null;
+        }
+
+        List<TransactionDTO> txDtos = currentAccount.getTransactions().stream()
+                .map(tx -> new TransactionDTO(
+                        tx.getTimestamp(),
+                        tx.getType().getDescription(),
+                        tx.getAmount().format()
+                ))
+                .collect(Collectors.toList());
+
+        return new AccountInfoDTO(
+                currentAccount.getAccountNumber(),
+                currentAccount.getBalance().format(),
+                currentAccount.getDailyWithdrawalLimit().minus(currentAccount.getTotalWithdrawnToday()).format(),
+                txDtos
+        );
     }
 
     private void ensureAuthenticated() {
