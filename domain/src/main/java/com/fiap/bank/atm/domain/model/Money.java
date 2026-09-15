@@ -12,7 +12,7 @@ public final class Money {
     private final BigDecimal amount;
 
     private Money(BigDecimal amount) {
-        this.amount = amount.setScale(2);
+        this.amount = amount.setScale(2, java.math.RoundingMode.HALF_UP);
     }
 
     public static Money of(double amount) {
