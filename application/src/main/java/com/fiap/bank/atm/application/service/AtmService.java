@@ -18,18 +18,13 @@ public class AtmService {
         this.accountRepository = accountRepository;
     }
 
-    public Account authenticate(String accountNumber, String pin) {
+    public void authenticate(String accountNumber, String pin) {
         Account account = accountRepository.findByAccountNumber(accountNumber)
                 .orElseThrow(() -> new InvalidPinException("Conta não encontrada."));
-
-        if (account == null) {
-            throw new InvalidPinException("Conta não encontrada.");
-        }
 
         try {
             account.authenticate(pin);
             currentAccount = account;
-            return account;
         } catch (RuntimeException e) {
             accountRepository.save(account); // Save to persist failed attempts / blocked state
             throw e;
@@ -54,9 +49,6 @@ public class AtmService {
         Account targetAccount = accountRepository.findByAccountNumber(targetAccountNumber)
                 .orElseThrow(() -> new IllegalArgumentException("Conta de destino não encontrada."));
 
-        if (targetAccount == null) {
-            throw new IllegalArgumentException("Conta de destino não encontrada.");
-        }
         currentAccount.transfer(targetAccount, Money.of(amount));
         accountRepository.save(currentAccount);
         accountRepository.save(targetAccount);

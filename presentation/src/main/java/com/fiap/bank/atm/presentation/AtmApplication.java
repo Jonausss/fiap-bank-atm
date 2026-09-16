@@ -6,7 +6,10 @@ import javax.swing.SwingUtilities;
 public class AtmApplication {
     public static void main(String[] args) {
         try {
-            Class<?> repoClass = Class.forName("com.fiap.bank.atm.infrastructure.persistence.InMemoryAccountRepository");
+            Class<?> factoryClass = Class.forName("com.fiap.bank.atm.infrastructure.persistence.ConnectionFactory");
+            factoryClass.getMethod("initializeSchema").invoke(null);
+
+            Class<?> repoClass = Class.forName("com.fiap.bank.atm.infrastructure.persistence.AccountRepositoryJdbcImpl");
             Object repositoryInstance = repoClass.getDeclaredConstructor().newInstance();
 
             AtmService atmService = null;
